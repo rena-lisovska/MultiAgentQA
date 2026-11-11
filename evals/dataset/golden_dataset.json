@@ -42,7 +42,7 @@
     "name": "Выполнение последовательного Workflow (E2E)",
     "input": {
       "source": "confluence",
-      "page_id": "EVL-003"
+      "page_id": "7077889"
     },
     "expected_properties": [
       "Агент должен выполнить этапы Workflow в последовательности: Requirement Review, затем Task Design и Test Design, затем Final Quality Gate, затем Final Reporting",

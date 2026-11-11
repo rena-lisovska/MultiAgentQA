@@ -1,8 +1,8 @@
 import json
-import subprocess
 from pathlib import Path
 
 from evaluator import evaluate_response
+from opencode_cli import start_opencode
 
 
 # =============================================================
@@ -129,22 +129,9 @@ for page_id, page_eval_cases in cases_by_page.items():
     # ЗАПУСК OPENCODE
     # =========================================================
 
-    process = subprocess.Popen(
-        [
-            "opencode",
-            "run",
-            "--format",
-            "json",
-            "--dir",
-            str(project_path),
-            prompt
-        ],
-        cwd=project_path,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        bufsize=1
+    process = start_opencode(
+        prompt,
+        project_path
     )
 
 

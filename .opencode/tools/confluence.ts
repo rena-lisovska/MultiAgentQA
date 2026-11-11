@@ -1,42 +1,50 @@
-import { tool } from "@opencode-ai/plugin"
+import { Plugin } from "@opencode/plugin"
 
-export default tool({
-    description: "Получить страницу Confluence по pageId",
+export default Plugin.define({
+    id: "confluence",
+    async setup(ctx) {
+        await ctx.tool.transform((editor) => {
+            editor.add({
+                name: "confluence",
+                description: "Получить страницу Confluence по pageId (body-format=storage)",
+                input: {
+                    type: "object",
+                    properties: { pageId: { type: "string" } },
+                    required: ["pageId"],
+                    additionalProperties: false
+                },
+                options: { codemode: true },
+                async execute(input, context) {
+                    const baseUrl = process.env.CONFLUENCE_URL
+                    const email = process.env.CONFLUENCE_EMAIL
+                    const token = process.env.CONFLUENCE_API_TOKEN
 
-    args: {
-        pageId: tool.schema.string()
-    },
+                    if (!baseUrl || !email || !token) {
+                        throw new Error("Не заданы переменные окружения Confluence")
+                    }
 
-    async execute(args) {
-        const baseUrl = process.env.CONFLUENCE_URL
-        const email = process.env.CONFLUENCE_EMAIL
-        const token = process.env.CONFLUENCE_API_TOKEN
+                    const auth = Buffer.from(`${email}:${token}`).toString("base64")
 
-        if (!baseUrl || !email || !token) {
-            throw new Error("Не заданы переменные окружения Confluence")
-        }
+                    const response = await fetch(
+                        `${baseUrl}/wiki/api/v2/pages/${(input as { pageId: string }).pageId}?body-format=storage`,
+                        {
+                            headers: {
+                                Authorization: `Basic ${auth}`,
+                                Accept: "application/json"
+                            },
+                            signal: context.signal
+                        }
+                    )
 
-        const auth = Buffer.from(`${email}:${token}`).toString("base64")
+                    if (!response.ok) {
+                        throw new Error(
+                            `Confluence API error: ${response.status} ${response.statusText}`
+                        )
+                    }
 
-        const response = await fetch(
-            `${baseUrl}/wiki/api/v2/pages/${args.pageId}?body-format=storage`,
-            {
-                method: "GET",
-                headers: {
-                    Authorization: `Basic ${auth}`,
-                    Accept: "application/json"
+                    return { content: JSON.stringify(await response.json()) }
                 }
-            }
-        )
-
-        if (!response.ok) {
-            throw new Error(
-                `Confluence API error: ${response.status} ${response.statusText}`
-            )
-        }
-
-        const data = await response.json()
-
-        return JSON.stringify(data)
+            })
+        })
     }
 })

@@ -1,6 +1,7 @@
 import json
-import subprocess
 from pathlib import Path
+
+from opencode_cli import start_opencode
 
 
 # =============================================================
@@ -128,22 +129,9 @@ ACTUAL AGENT RESPONSE:
     # ЗАПУСК EVALUATOR
     # =========================================================
 
-    process = subprocess.Popen(
-        [
-            "opencode",
-            "run",
-            "--format",
-            "json",
-            "--dir",
-            str(project_path),
-            judge_prompt
-        ],
-        cwd=project_path,
-        stdin=subprocess.DEVNULL,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        bufsize=1
+    process = start_opencode(
+        judge_prompt,
+        project_path
     )
 
 
