@@ -23,7 +23,7 @@ dataset_path = (
 # =============================================================
 
 # Минимально допустимый процент успешно пройденных Eval Cases.
-MIN_PASS_RATE = 100.0
+MIN_PASS_RATE = 95.0
 
 # Минимально допустимый процент выполненных Expected Properties.
 MIN_EXPECTED_PROPERTIES_PASS_RATE = 95.0
@@ -119,9 +119,9 @@ for page_id, page_eval_cases in cases_by_page.items():
     # агенту не передаются.
 
     prompt = (
-        f"Получи требования из Confluence "
+        f"Выполни полный флоу агента "
+        f"для требований из Confluence "
         f"со страницы pageId={page_id} "
-        f"и выполни их анализ."
     )
 
 

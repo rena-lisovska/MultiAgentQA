@@ -7,7 +7,7 @@ from pathlib import Path
 # PATHS
 # =============================================================
 
-# Корень проекта QAI-05_adv1
+# Корень проекта multi-agent-qa
 project_path = Path(__file__).resolve().parent.parent
 
 
