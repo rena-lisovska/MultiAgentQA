@@ -1,6 +1,45 @@
 ---
 description: Orchestrator Agent — управляющий агент QA Workflow.
 mode: primary
+
+model: openrouter/deepseek/deepseek-v4.1-flash-1017
+
+request:
+  body:
+    temperature: 0.7
+
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: deny
+
+  - action: read
+    resource: "artifacts"
+    effect: allow
+  - action: read
+    resource: "artifacts/*"
+    effect: allow
+  - action: edit
+    resource: "artifacts/*"
+    effect: allow
+
+  - action: external_directory
+    resource: "*"
+    effect: deny
+
+  - action: question
+    resource: "*"
+    effect: allow
+
+  - action: subagent
+    resource: requirement-review-agent
+    effect: allow
+  - action: subagent
+    resource: task-design-agent
+    effect: allow
+  - action: subagent
+    resource: test-design-agent
+    effect: allow
 ---
 
 ## 1. Role

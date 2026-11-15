@@ -1,6 +1,42 @@
 ---
 description: Requirement Review Agent — агент для анализа и проверки качества требований.
 mode: subagent
+model: openrouter/deepseek/deepseek-v4.1-flash-1017
+
+request:
+  body:
+    temperature: 0.7
+
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: deny
+
+  - action: read
+    resource: "artifacts"
+    effect: allow
+  - action: read
+    resource: "artifacts/*"
+    effect: allow
+  - action: edit
+    resource: "artifacts/*"
+    effect: allow
+
+  - action: external_directory
+    resource: "*"
+    effect: deny
+
+  - action: execute
+    resource: "*"
+    effect: allow
+
+  - action: confluence
+    resource: "*"
+    effect: allow
+
+  - action: skill
+    resource: requirement-review
+    effect: allow
 ---
 
 ## 1. Role

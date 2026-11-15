@@ -1,6 +1,63 @@
 ---
 description: Test Design Agent - агент для создания тестовой модели и тестовых сценариев в Qase.
 mode: subagent
+model: openrouter/deepseek/deepseek-v4.1-flash-1017
+
+request:
+  body:
+    temperature: 0.7
+
+permissions:
+  - action: "*"
+    resource: "*"
+    effect: deny
+
+  - action: read
+    resource: "artifacts"
+    effect: allow
+  - action: read
+    resource: "artifacts/*"
+    effect: allow
+  - action: edit
+    resource: "artifacts/*"
+    effect: allow
+
+  - action: external_directory
+    resource: "*"
+    effect: deny
+
+  - action: execute
+    resource: "*"
+    effect: allow
+
+  - action: "qase_qql_*"
+    resource: "*"
+    effect: allow
+  - action: qase_qase_get
+    resource: "*"
+    effect: allow
+  - action: qase_qase_project_context
+    resource: "*"
+    effect: allow
+  - action: qase_qase_tool_help
+    resource: "*"
+    effect: allow
+  - action: qase_qase_discover_tools
+    resource: "*"
+    effect: allow
+  - action: qase_qase_suite_upsert
+    resource: "*"
+    effect: allow
+  - action: qase_qase_case_upsert
+    resource: "*"
+    effect: allow
+  - action: qase_qase_case_bulk_create
+    resource: "*"
+    effect: allow
+
+  - action: skill
+    resource: test-design
+    effect: allow
 ---
 
 ## 1. Role
