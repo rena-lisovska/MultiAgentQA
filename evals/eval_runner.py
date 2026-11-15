@@ -52,13 +52,21 @@ eval_results = []
 
 
 # =============================================================
-# ГРУППИРОВКА EVAL CASES ПО СТРАНИЦЕ CONFLUENCE
+# PROMPT ДЛЯ QA AGENT
 # =============================================================
 
-cases_by_page = {}
+# Каждый Eval Case содержит собственный eval_prompt —
+# формулировку задачи, которая передаётся QA Agent.
+#
+# В eval_prompt допускается плейсхолдер {page_id}:
+# Runner подставляет вместо него значение
+# eval_case["input"]["page_id"].
+#
+# Expected Properties и Forbidden Behavior
+# агенту не передаются.
 
 
-for eval_case in eval_cases:
+def build_agent_prompt(eval_case):
 
     eval_input = eval_case["input"]
 
@@ -73,15 +81,64 @@ for eval_case in eval_cases:
         )
 
 
-    page_id = eval_input["page_id"]
+    eval_prompt = eval_case.get("eval_prompt")
 
 
-    if page_id not in cases_by_page:
+    if not isinstance(eval_prompt, str) or not eval_prompt.strip():
 
-        cases_by_page[page_id] = []
+        raise RuntimeError(
+            f"Eval Case {eval_case['id']} не содержит "
+            f"непустое строковое поле eval_prompt"
+        )
 
 
-    cases_by_page[page_id].append(
+    page_id = eval_input.get("page_id")
+
+
+    if "{page_id}" in eval_prompt:
+
+        if page_id is None:
+
+            raise RuntimeError(
+                f"Eval Case {eval_case['id']} использует "
+                f"плейсхолдер {{page_id}}, "
+                f"но page_id не задан"
+            )
+
+
+        eval_prompt = eval_prompt.replace(
+            "{page_id}",
+            str(page_id)
+        )
+
+
+    return eval_prompt
+
+
+# =============================================================
+# ГРУППИРОВКА EVAL CASES ПО PROMPT
+# =============================================================
+
+# Один запуск QA Agent выполняется на один уникальный Prompt.
+# Eval Cases с идентичным Prompt переиспользуют
+# один и тот же фактический ответ агента.
+
+cases_by_prompt = {}
+
+
+for eval_case in eval_cases:
+
+    agent_prompt = build_agent_prompt(
+        eval_case
+    )
+
+
+    if agent_prompt not in cases_by_prompt:
+
+        cases_by_prompt[agent_prompt] = []
+
+
+    cases_by_prompt[agent_prompt].append(
         eval_case
     )
 
@@ -90,7 +147,7 @@ for eval_case in eval_cases:
 # ЗАПУСК QA AGENT
 # =============================================================
 
-for page_id, page_eval_cases in cases_by_page.items():
+for agent_prompt, prompt_eval_cases in cases_by_prompt.items():
 
     print()
     print("=" * 80)
@@ -99,11 +156,18 @@ for page_id, page_eval_cases in cases_by_page.items():
 
     print()
     print("Источник требований: Confluence")
-    print(f"pageId: {page_id}")
 
     print(
-        f"Количество Eval Cases для этой страницы: "
-        f"{len(page_eval_cases)}"
+        "Eval Cases в этом запуске: "
+        + ", ".join(
+            eval_case["id"]
+            for eval_case in prompt_eval_cases
+        )
+    )
+
+    print(
+        f"Количество Eval Cases для этого Prompt: "
+        f"{len(prompt_eval_cases)}"
     )
 
     print()
@@ -118,11 +182,11 @@ for page_id, page_eval_cases in cases_by_page.items():
     # Expected Properties и Forbidden Behavior
     # агенту не передаются.
 
-    prompt = (
-        f"Выполни полный флоу агента "
-        f"для требований из Confluence "
-        f"со страницы pageId={page_id} "
-    )
+    print("PROMPT ДЛЯ QA AGENT:")
+
+    print(agent_prompt)
+
+    print()
 
 
     # =========================================================
@@ -130,7 +194,7 @@ for page_id, page_eval_cases in cases_by_page.items():
     # =========================================================
 
     process = start_opencode(
-        prompt,
+        agent_prompt,
         project_path
     )
 
@@ -242,12 +306,13 @@ for page_id, page_eval_cases in cases_by_page.items():
             print(stderr)
 
 
-        for eval_case in page_eval_cases:
+        for eval_case in prompt_eval_cases:
 
             eval_results.append(
                 {
                     "id": eval_case["id"],
                     "name": eval_case["name"],
+                    "prompt": agent_prompt,
                     "status": "ERROR",
                     "score": 0.0,
                     "expected_properties": [],
@@ -271,12 +336,13 @@ for page_id, page_eval_cases in cases_by_page.items():
         )
 
 
-        for eval_case in page_eval_cases:
+        for eval_case in prompt_eval_cases:
 
             eval_results.append(
                 {
                     "id": eval_case["id"],
                     "name": eval_case["name"],
+                    "prompt": agent_prompt,
                     "status": "ERROR",
                     "score": 0.0,
                     "expected_properties": [],
@@ -307,9 +373,9 @@ for page_id, page_eval_cases in cases_by_page.items():
     # =========================================================
 
     # Один фактический Agent Response
-    # проверяется всеми Eval Cases этой страницы.
+    # проверяется всеми Eval Cases этого Prompt.
 
-    for eval_case in page_eval_cases:
+    for eval_case in prompt_eval_cases:
 
         print()
         print()
@@ -371,6 +437,7 @@ for page_id, page_eval_cases in cases_by_page.items():
                 {
                     "id": eval_case["id"],
                     "name": eval_case["name"],
+                    "prompt": agent_prompt,
                     "status": status,
                     "score": score,
 
@@ -416,6 +483,7 @@ for page_id, page_eval_cases in cases_by_page.items():
                 {
                     "id": eval_case["id"],
                     "name": eval_case["name"],
+                    "prompt": agent_prompt,
                     "status": "ERROR",
                     "score": 0.0,
                     "expected_properties": [],
